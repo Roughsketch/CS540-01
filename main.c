@@ -24,8 +24,8 @@ int main(int argc, char *argv[])
 
   //  Get all the data we need from the command line
   char *num_str = argv[1];
-  long int num_base = strtol(argv[2], NULL, 10);
-  long int num_new_base = strtol(argv[3], NULL, 10);
+  uint32_t num_base = strtol(argv[2], NULL, 10);
+  uint32_t num_new_base = strtol(argv[3], NULL, 10);
 
   //  Check if given bases are within the correct values
   //  If strtol fails, it will return 0 which will be caught
@@ -36,73 +36,74 @@ int main(int argc, char *argv[])
     return EXIT_FAILURE;
   }
 
-  //  If the given bases are the same then warn the user
-  //  This is a warning because testing can involve converting to the original base
+  //  If the given bases are the same then tell the user
   if (num_base == num_new_base)
   {
-    puts("Warning: Number base and new base are equal.");
+    puts("Number base and new base are equal. Stopping.");
+    return EXIT_SUCCESS;
   }
 
   //  Convert the number string to uppercase which is what is used for bases over 10
-  for (int i = 0; i < strlen(num_str); i++)
+  for (uint32_t i = 0; i < strlen(num_str); i++)
   {
     num_str[i] = toupper(num_str[i]);
   }
 
   //  Get the base 10 number from the string
-  int number = stoi(num_str, num_base);
+  uint32_t number = 0;
 
-  //  printf("The base 10 representation of %s is %d\n", num_str, number);
-
-  //  If error (-1 return) then don't try to go any further
-  if (number == -1)
+  if (!stoi(num_str, &number, num_base))
   {
+    puts("Could not convert to base 10.");
     return EXIT_FAILURE;
   }
 
+  printf("The base 10 representation of %s is %u\n", num_str, number);
 
   //  Create a new string to hold the new base representation
   char *num_str_new = calloc(BASE_MAX_LEN, sizeof(char));
 
   //  Convert the number and store the output in num_str_new
-  itos(number, num_new_base, num_str_new, BASE_MAX_LEN);
+  if (!itos(number, num_new_base, num_str_new, BASE_MAX_LEN))
+  {
+    puts("Warning: itos returned false.");
+  }
 
   //  Print the results
-  printf("The base %d representation of %s (base %d) is %s\n", num_new_base, num_str, num_base, num_str_new);
+  printf("The base %u representation of %s (base %d) is %s\n", num_new_base, num_str, num_base, num_str_new);
 
   return EXIT_SUCCESS;
 }
 
-int stoi(char *str, unsigned int base)
+bool stoi(char *str, uint32_t *number, uint32_t base)
 {
-  int length = strlen(str);
-  int output = 0;
+  uint32_t length = strlen(str);
 
   //  Go through the string and see if it contains only valid characters
-  for (int i = 0; i < length; i++)
+  for (uint32_t i = 0; i < length; i++)
   {
     //  If the current character is not within the valid choices
     if (strchr(BASE_STR, str[i]) == NULL)
     {
       printf("The number %s is invalid for base %d: Found invalid character %c.\n", str, base, str[i]);
-      return -1;
+      return false;
     }
   }
 
   //  Start from the index of base which is always the start of invalid characters for the given base
   //  Go through each value past base and if it is found in the string then the given base is invalid
-  for (int i = base; i < BASE_MAX; i++)
+  for (uint32_t i = base; i < BASE_MAX; i++)
   {
     //  If the string has an invalid base character or 
     if (strchr(str, BASE_STR[i]) != NULL)
     {
       printf("The number %s is invalid for base %d: Found invalid character %c.\n", str, base, BASE_STR[i]);
-      return -1;
+      return false;
     }
   }
 
   //  Go through each character in the string
-  for (int i = 0; i < length; i++)
+  for (uint32_t i = 0; i < length; i++)
   {
     /*
       To represent base 10 numbers you have to successively multiply the value
@@ -110,7 +111,7 @@ int stoi(char *str, unsigned int base)
 
       This is the same concept made dynamic for any given base.
     */
-    int multiplier = pow(base, (length - i - 1)); //  Get base to the current digit's power
+    uint32_t multiplier = pow(base, (length - i - 1)); //  Get base to the current digit's power
 
     //  If multiplier is 0 then we're on the last digit which is simply added
     if (multiplier == 0)
@@ -119,29 +120,29 @@ int stoi(char *str, unsigned int base)
       multiplier = 1;
     }
 
-    output += multiplier * get_index(BASE_STR, str[i], 1);
+    *number += multiplier * get_index(BASE_STR, str[i], 1);
   }
 
-  return output;
+  return true;
 }
 
-bool itos(int number, int base, char *out, int max_len)
+bool itos(uint32_t number, uint32_t base, char *out, uint32_t max_len)
 {
-  int power = log(number) / log(base);  //  Get the maximum power of the number in the given base
-  int i;
+  int32_t power = log(number) / log(base);  //  Get the maximum power of the number in the given base
+  uint32_t i;
 
   for (i = 0; i < max_len - 1 && number > 0; i++, power--)
   {
-    int amount = number / (int)pow(base, power);
+    uint32_t amount = number / (int)pow(base, power);
 
     //  If this is the last number then just set the value
     if (power == 0)
     {
       amount = number;
-      number = 0;
+      //number = 0;
     }
 
-    number -= (int)pow(base, power) * amount;
+    number -= (uint32_t)pow(base, power) * amount;
 
     out[i] = BASE_STR[amount];
   }
@@ -163,7 +164,7 @@ bool itos(int number, int base, char *out, int max_len)
   return true;  //  Success
 }
 
-int get_index(char *str, char value, int occurance)
+int32_t get_index(char *str, char value, uint32_t occurance)
 {
   char *ptr = NULL;
 
