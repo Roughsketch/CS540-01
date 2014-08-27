@@ -40,7 +40,7 @@ bool stoi(char *str, uint32_t *number, uint32_t base);
 bool itos(uint32_t number, uint32_t base, char *out, uint32_t max_len);
 
 /*
-  Gets the index of a given value inside a string
+  Gets the index of a given value inside of a string
 
   @param
     char *str: The string to search

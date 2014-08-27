@@ -131,6 +131,14 @@ bool itos(uint32_t number, uint32_t base, char *out, uint32_t max_len)
   int32_t power = log(number) / log(base);  //  Get the maximum power of the number in the given base
   uint32_t i;
 
+  //  Special case 0, just set the values for now
+  if (number == 0)
+  {
+    out[0] = '0';
+    out[1] = '\0';
+    return true;
+  }
+
   for (i = 0; i < max_len - 1 && number > 0; i++, power--)
   {
     uint32_t amount = number / (int)pow(base, power);
@@ -149,7 +157,7 @@ bool itos(uint32_t number, uint32_t base, char *out, uint32_t max_len)
 
   //  For any remaining powers append a 0 to the string
   //  This is for cases like 0x64 -> 100d where it would try to return "1" instead of "100"
-  for(;power >= 0; power--, i++)
+  for(;power >= 0 && i < max_len - 1; power--, i++)
   {
     out[i] = BASE_STR[0];
   }
